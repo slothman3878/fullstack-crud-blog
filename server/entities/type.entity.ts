@@ -29,7 +29,7 @@ export class Type extends Base<Type> {
   posts: Collection<Post> = new Collection<Post>(this);
 
   @Field(()=>[SubType])
-  @OneToMany(()=>SubType, (st: SubType)=>st.type, { cascade: [Cascade.ALL] })
+  @OneToMany(()=>SubType, (st: SubType)=>st.suptype, { cascade: [Cascade.ALL] })
   subtypes: Collection<SubType> = new Collection<SubType>(this);
 }
 
@@ -45,7 +45,11 @@ export class SubType extends Base<SubType> {
   @Property({ length: 255, nullable: true })
   desc: string;
 
+  @Field(()=>[Post])
+  @OneToMany(()=>Post, (p: Post) => p.subtype,  { cascade: [Cascade.ALL] })
+  posts: Collection<Post> = new Collection<Post>(this);
+
   @Field(()=>Type)
   @ManyToOne(()=>Type)
-  type: Type;
+  suptype: Type;
 }

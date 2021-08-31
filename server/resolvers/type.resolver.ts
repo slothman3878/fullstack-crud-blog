@@ -7,7 +7,7 @@ import {
   Field,
   Mutation
 } from "type-graphql";
-import { Type } from "../entities/type.entity";
+import { Type, SubType } from "../entities/type.entity";
 import { Post } from "../entities/post.entity";
 import { MyContext } from "../types";
 
@@ -15,6 +15,12 @@ import { MyContext } from "../types";
 class TypeMutationInput {
   @Field()
   name: string;
+}
+
+@InputType()
+class SubTypeMutationInput extends TypeMutationInput {
+  @Field()
+  suptypeId: string;
 }
 
 @InputType()
@@ -35,7 +41,7 @@ export class TypeResolver {
   ): Promise<Type|null> {
     const repo = ctx.em.getRepository(Type);
     return await repo.findOne({ ...input }, {
-      populate: ['posts']
+      populate: ['posts', 'subtypes']
     });
   }
 
@@ -47,7 +53,7 @@ export class TypeResolver {
   ): Promise<Type[]|null> {
     const repo = ctx.em.getRepository(Type);
     return await repo.find({}, {
-      populate: ['posts'],
+      populate: ['posts', 'subtypes'],
       limit,
       offset
     });
@@ -63,5 +69,46 @@ export class TypeResolver {
     ctx.em.persist(type);
     await ctx.em.flush();
     return type;
+  }
+}
+
+@Resolver(()=>SubType)
+export class SubTypeResolver {
+  @Query(() => SubType, { nullable: true })
+  async subtype(
+    @Arg('input') input: TypeQueryInput,    
+    @Ctx() ctx: MyContext
+  ): Promise<SubType|null> {
+    const repo = ctx.em.getRepository(SubType);
+    return await repo.findOne({ ...input }, {
+      populate: ['posts', 'suptype.posts', 'suptype.subtypes']
+    });
+  }
+
+  @Query(() => [SubType], { nullable: true })
+  async subtypes(
+    @Arg('limit', { defaultValue: 10 }) limit: number,
+    @Arg('offset', { defaultValue: 0 }) offset: number,
+    @Ctx() ctx: MyContext
+  ): Promise<SubType[]|null> {
+    const repo = ctx.em.getRepository(SubType);
+    return await repo.find({}, {
+      populate: ['posts', 'suptype.posts', 'suptype.subtypes'],
+      limit,
+      offset
+    });
+  }
+
+  @Mutation(() => SubType)
+  async createSubType(
+    @Arg("input") input: SubTypeMutationInput,
+    @Ctx() ctx: MyContext
+  ): Promise<SubType> {
+    const subtype = new SubType();
+    subtype.suptype = await ctx.em.findOneOrFail(Type, { id: input.suptypeId });
+    subtype.name = input.name;
+    ctx.em.persist(subtype);
+    await ctx.em.flush();
+    return subtype;
   }
 }

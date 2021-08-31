@@ -19,10 +19,9 @@ import ormConfig from './orm.config';
 
 import { HelloResolver } from "./resolvers/hello.resolver";
 import { PostResolver } from "./resolvers/post.resolver";
-import { TypeResolver } from "./resolvers/type.resolver";
+import { TypeResolver, SubTypeResolver } from "./resolvers/type.resolver";
 
 export default class Application {
-//  public orm: MikroORM<IDatabaseDriver<Connection>>;
   public orm: MikroORM<AbstractSqlDriver<AbstractSqlConnection>>;
   public app: express.Application;
   public apollo: ApolloServer;
@@ -41,10 +40,14 @@ export default class Application {
   //Setup GraphQL
   public setUp = async (): Promise<void> => {
     try {
-      //const em: SqlEntityManager = this.orm.em.fork();
       this.apollo = new ApolloServer({
         schema: await buildSchema({
-          resolvers: [HelloResolver, PostResolver, TypeResolver],
+          resolvers: [
+            HelloResolver, 
+            PostResolver, 
+            TypeResolver,
+            SubTypeResolver
+          ],
           validate: false,
         }),
         context: () => ({ em: this.orm.em.fork() }),
