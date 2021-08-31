@@ -30,7 +30,7 @@ class PostMutationInput {
   body: string;
   @Field()
   type: string;
-  @Field()
+  @Field({ nullable: true })
   published?: boolean;
 }
 
@@ -66,7 +66,7 @@ export class PostResolver {
   ): Promise<Post|null> {
     const repo = ctx.em.getRepository(Post);
     return await repo.findOne({ ...input }, {
-      populate: ['type.posts', 'subtype.posts']
+      populate: ['type.posts']
     });
   }
 
@@ -83,13 +83,13 @@ export class PostResolver {
       type = await ctx.em.findOneOrFail(Type, { name: input.type });
       delete input.type;
       return await repo.find({ ...input, type },{
-        populate: ['type.posts', 'subtype.posts'],
+        populate: ['type.posts'],
         limit,
         offset
       })
     } else {
       return await repo.find({ ...input }, {
-        populate: ['type.posts', 'subtype.posts'],
+        populate: ['type.posts'],
         limit,
         offset
       });

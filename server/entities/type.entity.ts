@@ -28,28 +28,11 @@ export class Type extends Base<Type> {
   @OneToMany(()=>Post, (p: Post) => p.type,  { cascade: [Cascade.ALL] })
   posts: Collection<Post> = new Collection<Post>(this);
 
-  @Field(()=>[SubType])
-  @OneToMany(()=>SubType, (st: SubType)=>st.suptype, { cascade: [Cascade.ALL] })
-  subtypes: Collection<SubType> = new Collection<SubType>(this);
-}
-
-@ObjectType()
-@Entity()
-export class SubType extends Base<SubType> {
-  @Field()
-  @Property({ length: 20 })
-  @Unique()
-  name: string;
-
-  @Field()
-  @Property({ length: 255, nullable: true })
-  desc: string;
-
-  @Field(()=>[Post])
-  @OneToMany(()=>Post, (p: Post) => p.subtype,  { cascade: [Cascade.ALL] })
-  posts: Collection<Post> = new Collection<Post>(this);
-
-  @Field(()=>Type)
-  @ManyToOne(()=>Type)
+  @Field(()=>Type, { nullable: true })
+  @ManyToOne(()=>Type, { nullable: true })
   suptype: Type;
+
+  @Field(()=>[Type])
+  @OneToMany(()=>Type, (st: Type)=>st.suptype, { cascade: [Cascade.ALL] })
+  subtypes: Collection<Type> = new Collection<Type>(this);
 }

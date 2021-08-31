@@ -5,7 +5,7 @@ import {
   Unique,
 } from '@mikro-orm/core';
 import { ObjectType, Field, InputType } from "type-graphql";
-import { Type, SubType } from './type.entity';
+import { Type } from './type.entity';
 import { Base } from './base.entity';
 
 class PostConstructor {
@@ -13,7 +13,6 @@ class PostConstructor {
   slug: string;
   body: string;
   type: Type;
-  subtype?: SubType;
   published?: boolean;
 }
 
@@ -23,20 +22,20 @@ export class Post extends Base<Post> {
   @Field()
   @Property({ length: 255 })
   @Unique()
-  title!: string;
+  title: string;
 
   @Field()
   @Property({ length: 50 })
   @Unique()
-  slug!: string;
+  slug: string;
 
   @Field()
   @Property({ columnType: 'text', nullable: true })
-  body?: string;
+  body: string;
 
   @Field()
   @Property()
-  published: boolean;
+  published: boolean = false;
 
   @Field()
   @Property({ columnType: 'bigint' })
@@ -44,11 +43,7 @@ export class Post extends Base<Post> {
 
   @Field(()=>Type)
   @ManyToOne(()=>Type)
-  type!: Type;
-
-  @Field(()=>SubType)
-  @ManyToOne(()=>SubType, { nullable: true })
-  subtype: SubType;
+  type: Type;
 
   constructor(input: PostConstructor) {
     super();
@@ -56,7 +51,6 @@ export class Post extends Base<Post> {
     this.slug = input.slug;
     this.body = input.body;
     this.type = input.type;
-    if(input.subtype) this.subtype = input.subtype;
     if(input.published) this.published = true;
   }
 }

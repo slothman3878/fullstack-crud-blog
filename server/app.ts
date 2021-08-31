@@ -19,7 +19,7 @@ import ormConfig from './orm.config';
 
 import { HelloResolver } from "./resolvers/hello.resolver";
 import { PostResolver } from "./resolvers/post.resolver";
-import { TypeResolver, SubTypeResolver } from "./resolvers/type.resolver";
+import { TypeResolver } from "./resolvers/type.resolver";
 
 export default class Application {
   public orm: MikroORM<AbstractSqlDriver<AbstractSqlConnection>>;
@@ -46,7 +46,6 @@ export default class Application {
             HelloResolver, 
             PostResolver, 
             TypeResolver,
-            SubTypeResolver
           ],
           validate: false,
         }),
