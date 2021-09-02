@@ -10,8 +10,9 @@ import {
 } from "type-graphql";
 import { Type } from "../entities/type.entity";
 import { Post } from "../entities/post.entity";
+import { User } from "../entities/user.entity";
 import { MyContext } from "../types";
-import { isAdmin } from "../middleware/isAdmin"
+import { isAuth } from "../middleware/isAuth"
 
 @InputType()
 class TypeMutationInput {
@@ -58,11 +59,13 @@ export class TypeResolver {
   }
 
   @Mutation(() => Type)
-  @UseMiddleware(isAdmin)
+  @UseMiddleware(isAuth)
   async createType(
     @Arg("input") input: TypeMutationInput,
     @Ctx() ctx: MyContext
-  ): Promise<Type> {
+  ): Promise<Type|null> {
+    const user = await ctx.em.findOneOrFail(User, {id: ctx.req.session.userId});
+    if(!user.isAdmin) return null;
     const type = new Type();
     type.name = input.name;
     if(input.suptype){

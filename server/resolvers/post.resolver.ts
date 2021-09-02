@@ -10,9 +10,10 @@ import {
   UseMiddleware
 } from "type-graphql";
 import { Post } from "../entities/post.entity";
-import { Type } from "../entities/type.entity"
+import { Type } from "../entities/type.entity";
+import { User } from "../entities/user.entity";
 import { MyContext } from "../types";
-import { isAdmin } from "../middleware/isAdmin";
+import { isAuth } from "../middleware/isAuth";
 
 @ObjectType()
 export class Posts {
@@ -99,11 +100,13 @@ export class PostResolver {
   }
 
   @Mutation(() => Post)
-  @UseMiddleware(isAdmin)
+  @UseMiddleware(isAuth)
   async createPost(
     @Arg("input") input: PostMutationInput,
     @Ctx() ctx: MyContext
-  ): Promise<Post> {
+  ): Promise<Post|null> {
+    const user = await ctx.em.findOneOrFail(User, {id: ctx.req.session.userId});
+    if(!user.isAdmin) return null;
     const { type, ...inputExPost } = input;
     const post = new Post({
       ...inputExPost,
@@ -115,11 +118,13 @@ export class PostResolver {
   }
 
   @Mutation(() => Boolean)
-  @UseMiddleware(isAdmin)
+  @UseMiddleware(isAuth)
   async deletePost(
     @Arg("id") id: string,
     @Ctx() ctx: MyContext
   ): Promise<boolean> {
+    const user = await ctx.em.findOneOrFail(User, {id: ctx.req.session.userId});
+    if(!user.isAdmin) return false;
     const repo = ctx.em.getRepository(Post);
     const post = await repo.findOneOrFail({id});
     await repo.remove(post).flush();
@@ -127,11 +132,13 @@ export class PostResolver {
   }
 
   @Mutation(() => Post)
-  @UseMiddleware(isAdmin)
+  @UseMiddleware(isAuth)
   async updatePost(
     @Arg("id") id: string,
     @Ctx() ctx: MyContext
   ): Promise<Post|null> {
+    const user = await ctx.em.findOneOrFail(User, {id: ctx.req.session.userId});
+    if(!user.isAdmin) return null;
     return null;
   }
 }

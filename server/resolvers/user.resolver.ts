@@ -12,7 +12,6 @@ import { Type } from "../entities/type.entity";
 import { Post } from "../entities/post.entity";
 import { User } from "../entities/user.entity";
 import { MyContext } from "../types";
-import { isAdmin } from "../middleware/isAdmin"
 
 @InputType()
 class LoginRequest {
@@ -31,7 +30,7 @@ export class UserResolver {
   ): Promise<boolean> {
     const repo = ctx.em.getRepository(User);
     const user = await repo.findOneOrFail({ username: input.username });
-    ctx.req.session.isAdmin = true;
+    ctx.req.session.userId = user.id;
     return true;
   }
 }
