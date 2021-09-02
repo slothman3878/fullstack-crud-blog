@@ -25,6 +25,7 @@ require('dotenv').config();
 
 import { PostResolver } from "./resolvers/post.resolver";
 import { TypeResolver } from "./resolvers/type.resolver";
+import { UserResolver } from "./resolvers/user.resolver";
 
 export default class Application {
   public orm: MikroORM<AbstractSqlDriver<AbstractSqlConnection>>;
@@ -50,6 +51,7 @@ export default class Application {
           resolvers: [
             PostResolver, 
             TypeResolver,
+            UserResolver
           ],
           validate: false,
         }),
