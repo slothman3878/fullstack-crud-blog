@@ -6,11 +6,13 @@ import {
   Mutation,
   ObjectType,
   InputType,
-  Field
+  Field,
+  UseMiddleware
 } from "type-graphql";
 import { Post } from "../entities/post.entity";
 import { Type } from "../entities/type.entity"
 import { MyContext } from "../types";
+import { isAdmin } from "../middleware/isAdmin";
 
 @ObjectType()
 export class Posts {
@@ -97,6 +99,7 @@ export class PostResolver {
   }
 
   @Mutation(() => Post)
+  @UseMiddleware(isAdmin)
   async createPost(
     @Arg("input") input: PostMutationInput,
     @Ctx() ctx: MyContext
@@ -112,6 +115,7 @@ export class PostResolver {
   }
 
   @Mutation(() => Boolean)
+  @UseMiddleware(isAdmin)
   async deletePost(
     @Arg("id") id: string,
     @Ctx() ctx: MyContext
@@ -123,6 +127,7 @@ export class PostResolver {
   }
 
   @Mutation(() => Post)
+  @UseMiddleware(isAdmin)
   async updatePost(
     @Arg("id") id: string,
     @Ctx() ctx: MyContext

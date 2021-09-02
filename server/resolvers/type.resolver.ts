@@ -5,11 +5,13 @@ import {
   Query,
   InputType,
   Field,
-  Mutation
+  Mutation,
+  UseMiddleware
 } from "type-graphql";
 import { Type } from "../entities/type.entity";
 import { Post } from "../entities/post.entity";
 import { MyContext } from "../types";
+import { isAdmin } from "../middleware/isAdmin"
 
 @InputType()
 class TypeMutationInput {
@@ -56,6 +58,7 @@ export class TypeResolver {
   }
 
   @Mutation(() => Type)
+  @UseMiddleware(isAdmin)
   async createType(
     @Arg("input") input: TypeMutationInput,
     @Ctx() ctx: MyContext
