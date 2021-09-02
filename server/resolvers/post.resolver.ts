@@ -112,8 +112,7 @@ export class PostResolver {
       ...inputExPost,
       type: await ctx.em.getRepository(Type).findOneOrFail({name: type})
     });
-    ctx.em.persist(post);
-    await ctx.em.flush();
+    await ctx.em.persist(post).flush();
     return post;
   }
 
