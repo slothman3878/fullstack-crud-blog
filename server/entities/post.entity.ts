@@ -4,7 +4,7 @@ import {
   Property,
   Unique,
 } from '@mikro-orm/core';
-import { ObjectType, Field, InputType } from "type-graphql";
+import { ObjectType, Field } from "type-graphql";
 import { Type } from './type.entity';
 import { Base } from './base.entity';
 

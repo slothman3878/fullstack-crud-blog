@@ -29,7 +29,7 @@
     "server/migrations"
   ],
   "include": [
-    "./src/**/*.ts",
-    "./server/**/*.ts"
+    "./server/**/*.ts",
+    "./server/**/*.d.ts"
   ]
 }

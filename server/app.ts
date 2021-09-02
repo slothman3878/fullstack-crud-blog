@@ -13,11 +13,16 @@ import {
   AbstractSqlDriver,
   AbstractSqlConnection
 } from '@mikro-orm/postgresql';
+import ormConfig from './orm.config';
+import session from 'express-session';
+import connectRedis from 'connect-redis';
+import Redis from 'ioredis';
 import cors from 'cors';
 import { Server } from 'http';
-import ormConfig from './orm.config';
+import path from 'path';
 
-import { HelloResolver } from "./resolvers/hello.resolver";
+require('dotenv').config();
+
 import { PostResolver } from "./resolvers/post.resolver";
 import { TypeResolver } from "./resolvers/type.resolver";
 
@@ -43,13 +48,16 @@ export default class Application {
       this.apollo = new ApolloServer({
         schema: await buildSchema({
           resolvers: [
-            HelloResolver, 
             PostResolver, 
             TypeResolver,
           ],
           validate: false,
         }),
-        context: () => ({ em: this.orm.em.fork() }),
+        context: ({ req, res }) => ({
+          req,
+          res,
+          em: this.orm.em.fork() 
+        }),
       });
       await this.apollo.start();
     } catch (error) {
@@ -61,18 +69,43 @@ export default class Application {
   //Initialize Server
   public init = async (): Promise<void> => {
     this.app = express();
-
     this.app.use(cors());
-    
-    try {
-      this.apollo.applyMiddleware({
-        app: this.app,
-        cors: false,
-      });
+    this.app.use(express.json());    
+    const RedisStore = connectRedis(session);
+    const redis = new Redis();
+    this.app.use(
+      session({
+        store: new RedisStore({
+          client: redis,
+          disableTouch: true,
+        }),
+        cookie: {
+          maxAge: 1000 * 60 * 60 * 24, // 1 years
+          httpOnly: true,
+        },
+        saveUninitialized: true,
+        secret: process.env.SESSION_SECRET ?? [],
+        resave: false,
+      })
+    );
 
+    this.apollo.applyMiddleware({
+      app: this.app,
+      cors: false,
+    });
+
+    this.app.use(express.static(path.join(__dirname,"../client/build")));
+    this.app.get("*", (req, res) => {
+      res.sendFile(path.join(__dirname,"../client/build/index.html"));
+    });
+
+    try {
       const port = process.env.PORT || 5000;
       this.app.listen(port, () => {
-        console.log(`http://localhost:${port}/graphql`);
+        console.log('=================================================')
+        console.log(` server started on ${port}`);
+        console.log(` api endpoint is "http://localhost:${port}/graphql"`);
+        console.log('=================================================');
       });
     } catch (error) {
       console.log('Could not initialize server', error);
