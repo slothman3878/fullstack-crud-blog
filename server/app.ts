@@ -73,6 +73,9 @@ export default class Application {
     this.app = express();
     this.app.use(cors());
     this.app.use(express.json());    
+    this.app.use(express.static(path.join(__dirname,"../client/build")));
+
+    /// Session Store
     const RedisStore = connectRedis(session);
     const redis = new Redis();
     this.app.use(
@@ -96,13 +99,13 @@ export default class Application {
       cors: false,
     });
 
-    this.app.use(express.static(path.join(__dirname,"../client/build")));
-    this.app.get("*", (req, res) => {
-      res.sendFile(path.join(__dirname,"../client/build/index.html"));
-    });
-
     try {
       const port = process.env.PORT || 5000;
+
+      this.app.get("*", (req, res) => {
+        res.sendFile(path.join(__dirname,"../client/build/index.html"));
+      });
+
       this.app.listen(port, () => {
         console.log('=================================================')
         console.log(` server started on ${port}`);

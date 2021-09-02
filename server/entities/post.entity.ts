@@ -51,6 +51,6 @@ export class Post extends Base<Post> {
     this.slug = input.slug;
     this.body = input.body;
     this.type = input.type;
-    if(input.published) this.published = true;
+    this.published = input.published ?? false;
   }
 }
