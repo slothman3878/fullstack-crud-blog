@@ -23,6 +23,7 @@ import path from 'path';
 
 require('dotenv').config();
 
+import { HelloResolver } from "./resolvers/hello.resolver";
 import { PostResolver } from "./resolvers/post.resolver";
 import { TypeResolver } from "./resolvers/type.resolver";
 import { UserResolver } from "./resolvers/user.resolver";
@@ -49,6 +50,7 @@ export default class Application {
       this.apollo = new ApolloServer({
         schema: await buildSchema({
           resolvers: [
+            HelloResolver,
             PostResolver, 
             TypeResolver,
             UserResolver
@@ -71,8 +73,7 @@ export default class Application {
   //Initialize Server
   public init = async (): Promise<void> => {
     this.app = express();
-    this.app.use(cors());
-    this.app.use(express.json());    
+    this.app.use(cors()); 
     this.app.use(express.static(path.join(__dirname,"../client/build")));
 
     /// Session Store
