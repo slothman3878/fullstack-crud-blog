@@ -2,4 +2,6 @@
 node_modules
 migrations
 dist
-client
+client/__generated__
+client/src/graphql/mutations/__generated__
+clinet/src/graphql/queries/__generated__

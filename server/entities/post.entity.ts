@@ -6,6 +6,7 @@ import {
 } from '@mikro-orm/core';
 import { ObjectType, Field } from "type-graphql";
 import { Type } from './type.entity';
+import { User } from './user.entity';
 import { Base } from './base.entity';
 
 class PostConstructor {
@@ -13,6 +14,7 @@ class PostConstructor {
   slug: string;
   body: string;
   type: Type;
+  writer: User;
   published?: boolean;
 }
 
@@ -45,12 +47,17 @@ export class Post extends Base<Post> {
   @ManyToOne(()=>Type)
   type: Type;
 
+  @Field(()=>User)
+  @ManyToOne(()=>User)
+  writer: User;
+
   constructor(input: PostConstructor) {
     super();
     this.title = input.title;
     this.slug = input.slug;
     this.body = input.body;
     this.type = input.type;
+    this.writer = input.writer;
     this.published = input.published ?? false;
   }
 }

@@ -69,7 +69,7 @@ export class PostResolver {
   ): Promise<Post|null> {
     const repo = ctx.em.getRepository(Post);
     return await repo.findOne({ ...input }, {
-      populate: ['type.posts']
+      populate: ['type.posts','writer.posts']
     });
   }
 
@@ -86,13 +86,13 @@ export class PostResolver {
       type = await ctx.em.findOneOrFail(Type, { name: input.type });
       delete input.type;
       return await repo.find({ ...input, type },{
-        populate: ['type.posts'],
+        populate: ['type.posts','writer.posts'],
         limit,
         offset
       })
     } else {
       return await repo.find({ ...input }, {
-        populate: ['type.posts'],
+        populate: ['type.posts','writer.posts'],
         limit,
         offset
       });
@@ -105,12 +105,15 @@ export class PostResolver {
     @Arg("input") input: PostMutationInput,
     @Ctx() ctx: MyContext
   ): Promise<Post|null> {
-    const user = await ctx.em.findOneOrFail(User, {id: ctx.req.session.userId});
-    if(!user.isAdmin) return null;
+    const user = 
+      await ctx.em.findOneOrFail(User, {id: ctx.req.session.user_id});
+    if(!user) return null;
+    if(!user.isWriter) return null;
     const { type, ...inputExPost } = input;
     const post = new Post({
       ...inputExPost,
-      type: await ctx.em.getRepository(Type).findOneOrFail({name: type})
+      type: await ctx.em.getRepository(Type).findOneOrFail({name: type}),
+      writer: user
     });
     await ctx.em.persist(post).flush();
     return post;
@@ -122,10 +125,12 @@ export class PostResolver {
     @Arg("id") id: string,
     @Ctx() ctx: MyContext
   ): Promise<boolean> {
-    const user = await ctx.em.findOneOrFail(User, {id: ctx.req.session.userId});
-    if(!user.isAdmin) return false;
+    const user = 
+      await ctx.em.getRepository(User).findOne({id: ctx.req.session.user_id});
+    if(!user) return false;
     const repo = ctx.em.getRepository(Post);
     const post = await repo.findOneOrFail({id});
+    if(user!==post.writer) return false;
     await repo.remove(post).flush();
     return true;
   }
@@ -136,8 +141,12 @@ export class PostResolver {
     @Arg("id") id: string,
     @Ctx() ctx: MyContext
   ): Promise<Post|null> {
-    const user = await ctx.em.findOneOrFail(User, {id: ctx.req.session.userId});
-    if(!user.isAdmin) return null;
+    const user = 
+      await ctx.em.getRepository(User).findOne({id: ctx.req.session.user_id});
+    if(!user) return null;
+    const repo = ctx.em.getRepository(Post);
+    const post = await repo.findOneOrFail({id});
+    if(user!==post.writer) throw new Error('User is not the writer of this post');
     return null;
   }
 }

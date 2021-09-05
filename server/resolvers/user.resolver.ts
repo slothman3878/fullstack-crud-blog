@@ -1,3 +1,4 @@
+// under the current user model, the user resolver is relevant, since the authentication is done via google oauth alone
 import {
   Arg,
   Ctx,
@@ -12,52 +13,49 @@ import { Type } from "../entities/type.entity";
 import { Post } from "../entities/post.entity";
 import { User } from "../entities/user.entity";
 import { MyContext } from "../types";
-import argon2 from "argon2";
+import { isAuth } from "../middleware/isAuth";
 
+/*
 @InputType()
 class LoginRequest {
   @Field()
-  username: string;
+  email: string;
   @Field()
   password: string;
-}
+}*/
 
 @InputType()
-class SignupRequest {
-  @Field()
-  username: string;
-  @Field()
-  password1: string;
-  @Field()
-  password2: string;
+class UserQueryInput {
+  @Field({nullable: true})
+  id?: string;
+  @Field({nullable: true})
+  email?: string;
 }
 
 @Resolver()
 export class UserResolver {
+  /* This part is unnecssary, as authentication is done completely by passport.js
   @Mutation(() => Boolean)
   async login(
     @Arg("input") input: LoginRequest,
     @Ctx() ctx: MyContext
   ): Promise<boolean> {
     const repo = ctx.em.getRepository(User);
-    const user = await repo.findOneOrFail({ username: input.username });
-    if(await argon2.verify(input.password, user.password)) return false;
-    ctx.req.session.userId = user.id;
     return true;
+  }*/
+  @Query(()=>User)
+  async user(
+    @Arg('input') input: UserQueryInput,
+    @Ctx() ctx: MyContext
+  ): Promise<User|null> {
+    return ctx.em.getRepository(User).findOneOrFail({...input})
   }
 
-  @Mutation(() => Boolean)
-  async signup(
-    @Arg("input") input: SignupRequest,
+  @Query(()=>User)
+  @UseMiddleware(isAuth)
+  async me(
     @Ctx() ctx: MyContext
-  ): Promise<boolean> {
-    if(input.password1!==input.password2) return false;
-    const user = new User({
-      username: input.username,
-      password: await argon2.hash(input.password1)
-    });
-    await ctx.em.persist(user).flush();
-    ctx.req.session.userId = user.id;
-    return true;
+  ): Promise<User> {
+    return ctx.em.getRepository(User).findOneOrFail({id: ctx.req.session.user_id});
   }
 }

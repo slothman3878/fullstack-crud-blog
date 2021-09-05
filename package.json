@@ -1,8 +1,7 @@
 {
-  "name": "pern.ts.test",
+  "name": "pern-fullstack-blog",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "clean": "rm -rf dist && rm -rf server/migrations",
     "watch": "tsc -w",
@@ -14,9 +13,9 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "engines": {
-    "node": "15.x",
+    "node": "16.x",
     "yarn": "1.22.x"
   },
   "devDependencies": {
@@ -26,6 +25,8 @@
     "@types/express-promise-router": "^3.0.0",
     "@types/express-session": "^1.17.4",
     "@types/node": "^16.7.4",
+    "@types/passport": "^1.0.7",
+    "@types/passport-google-oauth": "^1.0.42",
     "@types/uuid": "^8.3.1",
     "nodemon": "^2.0.12",
     "ts-node": "^10.2.1",
@@ -37,14 +38,16 @@
     "@mikro-orm/migrations": "^4.5.9",
     "@mikro-orm/postgresql": "^4.5.9",
     "apollo-server-express": "^3.3.0",
-    "argon2": "^0.28.2",
     "connect-redis": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "express-graphql": "^0.12.0",
     "express-session": "^1.17.2",
     "graphql": "^15.5.1",
     "ioredis": "^4.27.9",
+    "passport": "^0.4.1",
+    "passport-google-oauth": "^2.0.0",
     "pg": "^8.7.1",
     "type-graphql": "^1.1.1",
     "uuid": "^8.3.2"

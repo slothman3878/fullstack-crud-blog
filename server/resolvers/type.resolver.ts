@@ -64,8 +64,8 @@ export class TypeResolver {
     @Arg("input") input: TypeMutationInput,
     @Ctx() ctx: MyContext
   ): Promise<Type|null> {
-    const user = await ctx.em.findOneOrFail(User, {id: ctx.req.session.userId});
-    if(!user.isAdmin) return null;
+    //const user = await ctx.em.findOneOrFail(User, {id: ctx.req.user.id});
+    //if(!user.isAdmin) return null;
     const type = new Type();
     type.name = input.name;
     if(input.suptype){
