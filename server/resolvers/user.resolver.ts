@@ -43,6 +43,7 @@ export class UserResolver {
     const repo = ctx.em.getRepository(User);
     return true;
   }*/
+  
   @Query(()=>User)
   async user(
     @Arg('input') input: UserQueryInput,
