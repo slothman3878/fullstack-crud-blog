@@ -17,11 +17,9 @@ passport.use(new OAuth2Strategy({
       const repo = DI.em.getRepository(User);
       const existingUser = await repo.findOne({ email });
       if(existingUser) {
-        req.session.user_id = existingUser.id;
         done(null, existingUser);
       } else {
         const newUser = new User({ email });
-        req.session.user_id = newUser.id;
         await DI.em.persist(newUser).flush();
       }
     } catch (err) {

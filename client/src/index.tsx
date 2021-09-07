@@ -4,16 +4,36 @@ import {
   ApolloClient,
   InMemoryCache,
   ApolloProvider,
+  createHttpLink,
+  from,
 } from "@apollo/client";
+import { onError } from "@apollo/client/link/error";
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 import { HelloQuery } from './graphql/queries/hello.query';
 
+const httpLink = createHttpLink({
+  uri: '/graphql',
+  credentials: 'same-origin' // fullstack hosted on single domain
+})
+
+const errorLink = onError(({ graphQLErrors, networkError }) => {
+  if (graphQLErrors)
+    graphQLErrors.forEach(({ message, locations, path }) =>
+      console.log(
+        `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`,
+      ),
+    );
+
+  if (networkError) console.log(`[Network error]: ${networkError}`);
+});
+
 const client = new ApolloClient({
-  uri: process.env.SCHEMA_PATH ?? "http://localhost:5000/graphql",
-  cache: new InMemoryCache()
+  //uri: process.env.SCHEMA_PATH ?? '/graphql',
+  cache: new InMemoryCache(),
+  link: errorLink.concat(httpLink),
 });
 
 // Check that client has successfully connected to graphql endpoint

@@ -9,20 +9,13 @@ import {
   Mutation,
   UseMiddleware
 } from "type-graphql";
+import passport from 'passport';
+import jsonwebtoken from 'jsonwebtoken';
 import { Type } from "../entities/type.entity";
 import { Post } from "../entities/post.entity";
 import { User } from "../entities/user.entity";
 import { MyContext } from "../types";
 import { isAuth } from "../middleware/isAuth";
-
-/*
-@InputType()
-class LoginRequest {
-  @Field()
-  email: string;
-  @Field()
-  password: string;
-}*/
 
 @InputType()
 class UserQueryInput {
@@ -34,16 +27,6 @@ class UserQueryInput {
 
 @Resolver()
 export class UserResolver {
-  /* This part is unnecssary, as authentication is done completely by passport.js
-  @Mutation(() => Boolean)
-  async login(
-    @Arg("input") input: LoginRequest,
-    @Ctx() ctx: MyContext
-  ): Promise<boolean> {
-    const repo = ctx.em.getRepository(User);
-    return true;
-  }*/
-  
   @Query(()=>User)
   async user(
     @Arg('input') input: UserQueryInput,
