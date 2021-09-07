@@ -1,6 +1,6 @@
 {
   "name": "pern-fullstack-blog",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "scripts": {
     "clean": "rm -rf dist && rm -rf server/migrations",
