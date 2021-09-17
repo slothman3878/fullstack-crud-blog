@@ -5,3 +5,4 @@ dist
 client/__generated__
 client/src/graphql/mutations/__generated__
 clinet/src/graphql/queries/__generated__
+client
