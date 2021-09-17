@@ -7,9 +7,16 @@ import {
   Property,
   Unique,
 } from '@mikro-orm/core';
-import { ObjectType, Field } from "type-graphql";
+import { 
+  ObjectType, 
+  Field,
+} from "type-graphql";
+import {
+  Length,
+} from 'class-validator';
 import { Post } from "./post.entity";
 import { Base } from './base.entity';
+import { Draft } from './draft.entity';
 
 // Create a BaseEntity with a @PrimaryKey as a number
 @ObjectType()
@@ -20,17 +27,25 @@ export class Type extends Base<Type> {
   @Unique()
   name: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Property({ length: 255, nullable: true })
-  desc: string;
+  desc?: string;
 
   @Field(()=>[Post])
   @OneToMany(()=>Post, (p: Post) => p.type,  { cascade: [Cascade.ALL] })
   posts: Collection<Post> = new Collection<Post>(this);
 
+  @Field(()=>[Draft])
+  @OneToMany(()=>Draft, (d: Draft) => d.type, { cascade: [Cascade.ALL] })
+  drafts: Collection<Draft> = new Collection<Draft>(this);
+
+  @Field()
+  @Property()
+  isRoot: boolean = false;
+
   @Field(()=>Type, { nullable: true })
   @ManyToOne(()=>Type, { nullable: true })
-  suptype: Type;
+  suptype?: Type;
 
   @Field(()=>[Type])
   @OneToMany(()=>Type, (st: Type)=>st.suptype, { cascade: [Cascade.ALL] })

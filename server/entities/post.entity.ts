@@ -4,19 +4,14 @@ import {
   Property,
   Unique,
 } from '@mikro-orm/core';
-import { ObjectType, Field } from "type-graphql";
+import { 
+  ObjectType, 
+  Field 
+} from "type-graphql";
+import { Draft } from './draft.entity';
 import { Type } from './type.entity';
 import { User } from './user.entity';
 import { Base } from './base.entity';
-
-class PostConstructor {
-  title: string;
-  slug: string;
-  body: string;
-  type: Type;
-  writer: User;
-  published?: boolean;
-}
 
 @ObjectType()
 @Entity()
@@ -36,11 +31,7 @@ export class Post extends Base<Post> {
   body: string;
 
   @Field()
-  @Property()
-  published: boolean = false;
-
-  @Field()
-  @Property({ columnType: 'bigint' })
+  @Property({ columnType: 'bigint', unsigned: true })
   views: number = 0;
 
   @Field(()=>Type)
@@ -51,13 +42,11 @@ export class Post extends Base<Post> {
   @ManyToOne(()=>User)
   writer: User;
 
-  constructor(input: PostConstructor) {
+  constructor (draft: Draft) {
     super();
-    this.title = input.title;
-    this.slug = input.slug;
-    this.body = input.body;
-    this.type = input.type;
-    this.writer = input.writer;
-    this.published = input.published ?? false;
+    this.title = draft.title;
+    this.body = draft.body;
+    this.type = draft.type;
+    this.writer = draft.writer;
   }
 }

@@ -9,6 +9,10 @@ import {
   Mutation,
   UseMiddleware
 } from "type-graphql";
+import {
+  AuthenticationError,
+  UserInputError,
+} from 'apollo-server-errors';
 import passport from 'passport';
 import jsonwebtoken from 'jsonwebtoken';
 import { Type } from "../entities/type.entity";
@@ -40,6 +44,12 @@ export class UserResolver {
   async me(
     @Ctx() ctx: MyContext
   ): Promise<User> {
-    return ctx.em.getRepository(User).findOneOrFail({id: ctx.req.session.user_id});
+    try {
+      return ctx.em.getRepository(User).findOneOrFail({
+        id: ctx.req.user
+      });
+    } catch(err) {
+      throw new AuthenticationError(err);
+    }
   }
 }

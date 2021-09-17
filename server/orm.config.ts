@@ -1,7 +1,6 @@
 import { MikroORM, Options } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import path from 'path';
-require('dotenv').config();
 
 export default {
   migrations: {
@@ -12,13 +11,14 @@ export default {
     dropTables: true, // allow to disable table dropping    
     safe: false, // allow to disable table and column dropping     
     emit: 'ts',
+    disableForeignKeys: false,
   },
-  user: process.env.PG_USER,
-  password: process.env.PG_PASSWORD,
-  dbName: process.env.PG_DATABASE,
-  host: process.env.PG_HOST,
-  port: process.env.PG_PORT,
+  clientUrl: process.env.DATABASE_URL,
   entities: ['dist/**/*.entity.js'],
   entitiesTs: ['server/**/*.entity.ts'],
   type: 'postgresql',
+  forceUndefined: true,
+  driverOptions: {
+    connection: { ssl: { rejectUnauthorized: false } },
+  },
 } as Options<PostgreSqlDriver>;

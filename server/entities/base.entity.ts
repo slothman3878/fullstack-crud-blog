@@ -10,6 +10,12 @@ import {
 } from 'type-graphql';
 import { v4 } from 'uuid';
 
+export type BaseType = {
+  id: string,
+  createdAt: string,
+  updatedAt: string,
+}
+
 @ObjectType({ isAbstract: true })
 export class Base<T extends { id: string }> extends BaseEntity<T, 'id'> {
   @Field(() => ID)

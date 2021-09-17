@@ -18,21 +18,18 @@ import {
   UserInputError,
   ForbiddenError,
 } from 'apollo-server-errors';
-import { Post } from "../entities/post.entity";
+import { Post } from '../entities/post.entity';
 import { Draft } from '../entities/draft.entity';
 import { Type } from "../entities/type.entity";
-import { User, } from "../entities/user.entity";
+import { User } from "../entities/user.entity";
 import { MyContext } from "../types";
 import { isAuth } from "../middleware/isAuth";
 
 @InputType()
-class PostMutationInput {
+class DraftMutationInput {
   @Field()
-  @Length(1,255)
+  @MaxLength(255)
   title: string;
-  @Field()
-  @Length(1,20)
-  slug: string;
   @Field({ nullable: true })
   body: string;
   @Field()
@@ -42,11 +39,9 @@ class PostMutationInput {
 // Input for single post query
 // Unique properties only
 @InputType()
-class PostQueryInput {
+class DraftQueryInput {
   @Field({ nullable: true })
   id?: string;
-  @Field({ nullable: true })
-  slug?: string;
   @Field({ nullable: true })
   title?: string;
 }
@@ -54,40 +49,48 @@ class PostQueryInput {
 // Input for multiple post query
 // Non-Unique properties only
 @InputType()
-class PostsQueryInput {
+class DraftsQueryInput {
   @Field({ nullable: true })
   type?: string;
-  @Field({ nullable: true })
-  writer?: string;
 }
 
-// use middlware to add authentication
-@Resolver(()=>Post)
-export class PostResolver {
-  @Query(() => Post, { nullable: true })
-  async post(
-    @Arg('input') input: PostQueryInput,
+@Resolver(()=>Draft)
+export class DraftResolver {
+  @Query(() => Draft, { nullable: true })
+  @UseMiddleware(isAuth)
+  async draft(
+    @Arg('input') input: DraftQueryInput,
     @Ctx() ctx: MyContext
-  ): Promise<Post|null> {
-    const repo = ctx.em.getRepository(Post);
-    const post = await repo.findOne({ ...input }, {
-      populate: ['type.posts','writer.posts']
+  ): Promise<Draft|null> {
+    let user: User;
+    try {
+      user = 
+        await ctx.em.getRepository(User)
+          .findOneOrFail({id: ctx.req.user});
+    } catch(err) { throw new AuthenticationError(err) }
+    const repo = ctx.em.getRepository(Draft);
+    const populate = ['writer.drafts','writer.posts'];
+    const draft = await repo.findOne({ ...input }, {
+      populate
     });
-    return post;
+    if(draft&&draft.writer!==user)
+      throw new ForbiddenError('User is not the writer of this Draft')
+    return draft;
   }
 
   // for paginated posts
-  @Query(() => [Post], { nullable: true })
-  async Posts(
-    @Arg('input') input: PostsQueryInput,
+  @Query(() => [Draft], { nullable: true })
+  @UseMiddleware(isAuth)
+  async Drafts(
+    @Arg('input') input: DraftsQueryInput,
     @Arg('limit', { defaultValue: 10 }) limit: number,
     @Arg('offset', { defaultValue: 0 }) offset: number,
     @Ctx() ctx: MyContext
-  ): Promise<Post[]|null> {
-    const repo = ctx.em.getRepository(Post);
-    const populate = ['type.posts','writer.posts'];
+  ): Promise<Draft[]|null> {
+    const repo = ctx.em.getRepository(Draft);
+    const populate = ['writer.drafts','writer.posts'];
     const filter={} as {
-      type: Type, writer: User
+      type: Type, //writer: User
     };
     if(input.type) {
       try {
@@ -95,14 +98,6 @@ export class PostResolver {
           await ctx.em.getRepository(Type)
             .findOneOrFail({id: input.type});
         filter.type = type;
-      } catch(err) { throw new UserInputError(err) };
-    }
-    if(input.writer) {
-      try {
-        const writer =
-          await ctx.em.getRepository(User)
-            .findOneOrFail({id: input.writer});
-        filter.writer = writer;
       } catch(err) { throw new UserInputError(err) };
     }
     return await repo.find({ ...filter }, {
@@ -114,39 +109,26 @@ export class PostResolver {
 
   @Mutation(() => Post)
   @UseMiddleware(isAuth)
-  async createPost(
-    @Arg('draft_id') draft_id: string,
-    @Arg('slug') slug: string,
+  async createDraft(
     @Ctx() ctx: MyContext
-  ): Promise<Post> {
+  ): Promise<Draft> {
     let user: User;
     try {
       user = 
         await ctx.em.getRepository(User)
           .findOneOrFail({id: ctx.req.user});
-    } catch (err) { throw new AuthenticationError(err) }
-    let draft: Draft;
-    try {
-      draft =
-        await ctx.em.getRepository(Draft)
-          .findOneOrFail({id: draft_id});
-    } catch (err) { throw new UserInputError(err) }
-    if(draft.writer!==user) 
-      throw new ForbiddenError('User is not the writer of this draft');
-    const post = new Post(draft);
-    post.slug = slug;
-    try {
-      await ctx.em.getRepository(Post).persist(post).flush();
-    } catch(err) { throw new UserInputError(err) }
-    try {
-      await ctx.em.getRepository(Draft).remove(draft).flush();
-    } catch(err) { throw new UserInputError(err) }
-    return post;
+    } catch (err) { throw new AuthenticationError(err) };
+    if(!user.isWriter) 
+      throw new ForbiddenError('User is not a writer');
+    const draft = new Draft();
+    draft.writer = user;
+    await ctx.em.getRepository(Draft).persist(draft).flush();
+    return draft;
   }
 
   @Mutation(() => Boolean)
   @UseMiddleware(isAuth)
-  async deletePost(
+  async deleteDraft(
     @Arg("id") id: string,
     @Ctx() ctx: MyContext
   ): Promise<boolean> {
@@ -156,43 +138,47 @@ export class PostResolver {
         await ctx.em.getRepository(User)
           .findOneOrFail({id: ctx.req.user});
     } catch(err) { throw new AuthenticationError(err) }
-    const repo = ctx.em.getRepository(Post);
-    let post;
+    const repo = ctx.em.getRepository(Draft);
+    let draft;
     try {
-      post = await repo.findOneOrFail({id});
+      draft = await repo.findOneOrFail({id});
     } catch(err) { throw new UserInputError(err); }
-    if(user!==post.writer) 
+    if(user!==draft.writer) 
       throw new ForbiddenError('User is not the writer of this post');
-    await repo.remove(post).flush();
+    await repo.remove(draft).flush();
     return true;
   }
 
   @Mutation(() => Post)
   @UseMiddleware(isAuth)
-  async updatePost(
+  async saveDraft(
     @Arg("id") id: string,
-    @Arg("input") input: PostMutationInput,
+    @Arg("input") input: DraftMutationInput,
     @Ctx() ctx: MyContext
-  ): Promise<Post> {
+  ): Promise<Draft> {
     let user: User;
     try {
       user = 
         await ctx.em.getRepository(User)
           .findOneOrFail({id: ctx.req.user});
     } catch(err) { throw new AuthenticationError(err); }
-    const repo = ctx.em.getRepository(Post);
-    let post;
+    const repo = ctx.em.getRepository(Draft);
+    let draft;
     try {
-      post = await repo.findOneOrFail({id});
+      draft = await repo.findOneOrFail({id});
     } catch (err) { throw new UserInputError(err) }
-    if(user!==post.writer) 
+    if(user!==draft.writer) 
       throw new ForbiddenError('User is not the writer of the post');
-    post.title = input.title;
-    post.slug = input.slug;
-    post.body = input.body;
+    draft.title = input.title;
+    draft.body = input.body;
+    try {
+      draft.type = 
+        await ctx.em.getRepository(Type)
+          .findOneOrFail({id: input.type})
+    } catch(err) { throw new UserInputError(err) }
     try {
       await ctx.em.flush();
     } catch(err) { throw new UserInputError(err) }
-    return post;
+    return draft;
   }
 }
